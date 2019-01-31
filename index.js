@@ -20,7 +20,7 @@ let users_connected = {};
 let avialable_rooms = [];
 
 io.sockets.on('connection', (socket) => {
-    var ip_address = socket.request.connection.remoteAddress
+    var ip_address = socket.request.connection.remoteAddress;
     console.log(ip_address);
     console.log('Client connected from: ' + ip_address + ":" + ip_address);
     users_connected[socket.id] = socket;
