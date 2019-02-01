@@ -38,6 +38,7 @@ io.sockets.on('connection', (socket) => {
     socket.on('create_room', (message) => {
         let room = new Room(makeId(), message.userId);
         room.live = true;
+        room.transmisor = socket;
         let _message = {
             status: 200,
             data: {
@@ -64,7 +65,7 @@ io.sockets.on('connection', (socket) => {
             socket.emit('join_room_response', _message);
         } else {
             if (room.receptor === null) {
-                room.receptor = message.userId;
+                room.receptor = socket;
                 socket.room = room.id;
                 let _message = {
                     status: 200,
@@ -90,15 +91,15 @@ io.sockets.on('connection', (socket) => {
         let room = avialable_rooms.find(obj => obj.id === message.room);
         if (room !== undefined && room.live === true) {
             if (room.transmisor !== null) {
-                let transmissor_socket = users_connected[room.transmisor];
-                if (transmissor_socket) {
+                //let transmissor_socket = users_connected[room.transmisor];
+                if (room.transmisor) {
                     let _message = {
-                        description: message.description,
+                        offer: message.offer,
                         from: message.from,
                         room: message.room
                     };
                     console.log(_message);
-                    transmissor_socket.emit('video_offer', _message);
+                    room.transmisor.emit('video_offer', _message);
                 }
             }
         } else {
@@ -117,15 +118,15 @@ io.sockets.on('connection', (socket) => {
         let room = avialable_rooms.find(obj => obj.id === message.room);
         if (room !== undefined && room.live === true) {
             if (room.receptor !== null) {
-                let receptor_socket = users_connected[room.receptor];
-                if (receptor_socket) {
+                // let receptor_socket = users_connected[room.receptor];
+                if (room.receptor) {
                     var _message = {
                         from: message.from,
-                        description: message.description,
+                        answer: message.answer,
                         room: message.room
                     };
                     console.log(_message);
-                    receptor_socket.emit('video_answer', _message);
+                    room.receptor.emit('video_answer', _message);
                 }
             }
         } else {
@@ -148,14 +149,12 @@ io.sockets.on('connection', (socket) => {
                 candidate: message.candidate,
                 room: message.room
             };
-            if (room.receptor === message.from) {
-                let transmisor_socket = users_connected[room.transmisor];
+            if (room.receptor.id === message.from) {
                 console.log(_message);
-                transmisor_socket.emit('candidate', _message);
-            } else if (room.transmisor === message.from) {
-                let receptor_socket = users_connected[room.receptor];
+                room.transmisor.emit('candidate', _message);
+            } else if (room.transmisor.id === message.from) {
                 console.log(_message);
-                receptor_socket.emit('candidate', _message);
+                room.receptor.emit('candidate', _message);
             }
         }
     });
