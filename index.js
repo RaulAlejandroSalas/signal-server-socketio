@@ -91,7 +91,6 @@ io.sockets.on('connection', (socket) => {
         let room = avialable_rooms.find(obj => obj.id === message.room);
         if (room !== undefined && room.live === true) {
             if (room.transmisor !== null) {
-                //let transmissor_socket = users_connected[room.transmisor];
                 if (room.transmisor) {
                     let _message = {
                         offer: message.offer,
@@ -117,8 +116,9 @@ io.sockets.on('connection', (socket) => {
     socket.on('video_answer', (message) => {
         let room = avialable_rooms.find(obj => obj.id === message.room);
         if (room !== undefined && room.live === true) {
+            // si la room actual tiene un receptor unido a la llamada entonces envio la respuesta
+            // desde el emisor A hasta el receptor B 
             if (room.receptor !== null) {
-                // let receptor_socket = users_connected[room.receptor];
                 if (room.receptor) {
                     var _message = {
                         from: message.from,
@@ -128,6 +128,15 @@ io.sockets.on('connection', (socket) => {
                     console.log(_message);
                     room.receptor.emit('video_answer', _message);
                 }
+            } // si la Room actual no tiene un receptor asociado no comenzar la video llamada
+            else{
+                let _message={
+                    status: 400,
+                    data:{
+                        message: "Video Answer don't have receptor active"    
+                    } 
+                }
+                socket.emit('video_answer', _message);
             }
         } else {
             let _message = {
@@ -166,15 +175,11 @@ io.sockets.on('connection', (socket) => {
                 from: message.from,
                 room: message.room
             };
-            if (room.receptor === message.from) {
-                let transmisor_socket = users_connected[room.transmisor];
-                console.log(_message);
-                transmisor_socket.emit('hangup_response', _message);
-            } else if (room.transmisor === message.from) {
-                let receptor_socket = users_connected[room.receptor];
-                if (receptor_socket !== undefined) {
-                    console.log(_message);
-                    receptor_socket.send(JSON.stringify(_message))
+            if (room.receptor.id === message.from) {
+                room.transmisor.emit('hangup', _message);
+            } else if (room.transmisor.id === message.from) {
+                if (room.transmisor.id !== undefined) {
+                    room.receptor.emit('hangup',_message);
                 } else {
                     let _message = {
                         status: 400,
@@ -183,7 +188,7 @@ io.sockets.on('connection', (socket) => {
                         }
                     };
                     console.log(_message);
-                    socket.emit('hangup_response', _message);
+                    socket.emit('hangup', _message);
                 }
             }
         } else {
@@ -195,37 +200,31 @@ io.sockets.on('connection', (socket) => {
                 }
             };
             console.log(_message);
-            socket.emit('hangup_response', _message);
+            socket.emit('hangup', _message);
         }
     });
     socket.on('disconnect', () => {
         console.log("Client Disconnect!!!");
         let room = avialable_rooms.find(obj => obj.id === socket.room);
         if (room !== undefined) {
-            if (room.receptor === socket.id) {
+            if (room.receptor.id === socket.id) {
                 let _message = {
                     from: socket.id,
                     room: room.id
                 };
-                let transmisor_socket = users_connected[room.transmisor];
-                console.log(_message);
-                transmisor_socket.emit('leave', _message);
+                room.transmisor.emit('leave', _message);
                 delete users_connected[socket.id];
-                //roomIndex = avialable_rooms.findIndex((obj => obj.id == socket.room));
-                //avialable_rooms[roomIndex].receptor = null;
+                roomIndex = avialable_rooms.findIndex((obj => obj.id == socket.room));
+                avialable_rooms[roomIndex].receptor = null;
                 avialable_rooms = avialable_rooms.filter(_room => _room.id !== room.id);
-            } else if (room.transmisor === socket.id) {
+            } else if (room.transmisor.id === socket.id) {
                 let _message = {
                     from: socket.id,
                     room: room.id
                 };
-                let receptor_socket = users_connected[room.receptor];
-                if (receptor_socket !== undefined) {
-                    console.log(_message);
-                    receptor_socket.emit('leave', _message);
-                    delete users_connected[socket.id];
-                    avialable_rooms = avialable_rooms.filter(_room => _room.id !== room.id);
-                }
+                room.receptor.emit('leave', _message);
+                delete users_connected[socket.id];
+                avialable_rooms = avialable_rooms.filter(_room => _room.id !== room.id);
             }
         } else {
             //No hay room creada 
