@@ -205,16 +205,25 @@ io.sockets.on('connection', (socket) => {
     });
     socket.on('disconnect', () => {
         console.log("Client Disconnect!!!");
+        console.log(socket.room);
         let room = avialable_rooms.find(obj => obj.id === socket.room);
         if (room !== undefined) {
-            if (room.receptor.id === socket.id) {
+            //Ha sido creada la room pero no se conecto nadie
+            // y se reinicio la connexion del transmisor
+            if(room.receptor === null){
+                let roomIndex = avialable_rooms.findIndex((obj => obj.id === socket.room));
+                delete avialable_rooms[roomIndex];
+                delete users_connected[socket.id];
+                console.log(_.size(users_connected));    
+            }
+            else if (room.receptor.id === socket.id) {
                 let _message = {
                     from: socket.id,
                     room: room.id
                 };
                 room.transmisor.emit('leave', _message);
                 delete users_connected[socket.id];
-                roomIndex = avialable_rooms.findIndex((obj => obj.id == socket.room));
+                let roomIndex = avialable_rooms.findIndex((obj => obj.id === socket.room));
                 avialable_rooms[roomIndex].receptor = null;
                 avialable_rooms = avialable_rooms.filter(_room => _room.id !== room.id);
             } else if (room.transmisor.id === socket.id) {
