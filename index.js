@@ -6,7 +6,7 @@ const _ = require('underscore');
 const path = require('path');
 const Room = require('./Room');
 const utilsMethods = require('./utils');
-let makeId = utilsMethods.makeId;
+let numericId = utilsMethods.numericId;
 const PORT = process.env.PORT || 3000;
 const INDEX = path.join(__dirname, 'index.html');
 
@@ -36,7 +36,7 @@ io.sockets.on('connection', (socket) => {
     socket.emit('join_server_response', _message)
 
     socket.on('create_room', (message) => {
-        let room = new Room(makeId(), message.userId);
+        let room = new Room(numericId(), message.userId);
         room.live = true;
         room.transmisor = socket;
         let _message = {
