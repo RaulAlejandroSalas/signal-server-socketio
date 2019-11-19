@@ -88,7 +88,7 @@ io.sockets.on('connection', (socket) => {
     });
 
     socket.on('video_offer', (message) => {
-        let room = avialable_rooms.find(obj => obj.id === message.room);
+        let room = avialable_rooms.find(obj => obj.id === parseInt(message.room));
         if (room !== undefined && room.live === true) {
             if (room.transmisor !== null) {
                 if (room.transmisor) {
@@ -114,7 +114,7 @@ io.sockets.on('connection', (socket) => {
     });
 
     socket.on('video_answer', (message) => {
-        let room = avialable_rooms.find(obj => obj.id === message.room);
+        let room = avialable_rooms.find(obj => obj.id === parseInt(message.room));
         if (room !== undefined && room.live === true) {
             // si la room actual tiene un receptor unido a la llamada entonces envio la respuesta
             // desde el emisor A hasta el receptor B 
@@ -151,7 +151,7 @@ io.sockets.on('connection', (socket) => {
     });
 
     socket.on('candidate', (message) => {
-        var room = avialable_rooms.find(obj => obj.id === message.room);
+        var room = avialable_rooms.find(obj => obj.id === parseInt(message.room));
         if (room !== undefined && room.live === true) {
             let _message = {
                 from: message.from,
@@ -169,7 +169,7 @@ io.sockets.on('connection', (socket) => {
     });
 
     socket.on('hangup', (message) => {
-        let room = avialable_rooms.find(obj => obj.id === message.room);
+        let room = avialable_rooms.find(obj => obj.id === parseInt(message.room));
         if (room !== undefined && room.live === true) {
             let _message = {
                 from: message.from,
@@ -206,12 +206,12 @@ io.sockets.on('connection', (socket) => {
     socket.on('disconnect', () => {
         console.log("Client Disconnect!!!");
         console.log(socket.room);
-        let room = avialable_rooms.find(obj => obj.id === socket.room);
+        let room = avialable_rooms.find(obj => obj.id === parseInt(socket.room));
         if (room !== undefined) {
             //Ha sido creada la room pero no se conecto nadie
             // y se reinicio la connexion del transmisor
             if(room.receptor === null){
-                let roomIndex = avialable_rooms.findIndex((obj => obj.id === socket.room));
+                let roomIndex = avialable_rooms.findIndex((obj => obj.id === parseInt(socket.room)));
                 delete avialable_rooms[roomIndex];
                 delete users_connected[socket.id];
                 console.log(_.size(users_connected));    
@@ -223,7 +223,7 @@ io.sockets.on('connection', (socket) => {
                 };
                 room.transmisor.emit('leave', _message);
                 delete users_connected[socket.id];
-                let roomIndex = avialable_rooms.findIndex((obj => obj.id === socket.room));
+                let roomIndex = avialable_rooms.findIndex((obj => obj.id === parseInt(socket.room)));
                 avialable_rooms[roomIndex].receptor = null;
                 avialable_rooms = avialable_rooms.filter(_room => _room.id !== room.id);
             } else if (room.transmisor.id === socket.id) {
