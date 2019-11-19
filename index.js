@@ -53,7 +53,7 @@ io.sockets.on('connection', (socket) => {
     });
 
     socket.on('join_room', (message) => {
-        let room = avialable_rooms.find(obj => obj.id === message.room);
+        let room = avialable_rooms.find(obj => obj.id === parseInt(message.room));
         if (room === undefined) {
             let _message = {
                 status: 400,
