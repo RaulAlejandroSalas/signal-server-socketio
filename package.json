@@ -12,6 +12,6 @@
   "dependencies": {
     "express": "4.16.4",
     "socket.io": "2.2.0",
-    "underscore": "^1.9.1"
+    "underscore": "^1.12.1"
   }
 }
